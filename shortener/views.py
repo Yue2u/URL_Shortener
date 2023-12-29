@@ -136,6 +136,7 @@ class UserCabinetView(View):
 
 
 def redirect_full_url(request, shortened_url):
+    shortened_url = shortened_url.lower()
     shortend_url = get_object_or_404(ShortenedLink, identifier=shortened_url)
     shortend_url.update_last_use()
     print(format_url(shortend_url.full_url))
