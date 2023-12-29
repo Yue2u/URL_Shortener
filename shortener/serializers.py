@@ -4,7 +4,7 @@ from rest_framework import serializers
 from link_shortener.settings import MAX_CODE_LENGTH
 
 from .models import ShortenedLink
-from .utils import generate_code
+from .utils import format_url, generate_code
 
 
 class ResponseShortenedLinkSerializer(serializers.ModelSerializer):
@@ -14,6 +14,14 @@ class ResponseShortenedLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShortenedLink
         exclude = ["user"]
+
+    def to_representation(self, data):
+        return {
+            "id": data.id,
+            "full_url": format_url(data.full_url),
+            "identifier": data.identifier,
+            "last_use": data.last_use,
+        }
 
 
 class ShortenedLinkSerializer(serializers.ModelSerializer):

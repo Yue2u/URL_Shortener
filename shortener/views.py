@@ -1,24 +1,15 @@
-import json
-
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views import View
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from link_shortener.settings import MAX_CODE_LENGTH
 
-from .forms import LinkToShortenForm
 from .models import ShortenedLink
 from .serializers import (ResponseShortenedLinkSerializer,
                           ShortenedLinkSerializer)
-from .utils import format_url, generate_code
 
 
 @extend_schema_view(
@@ -71,106 +62,18 @@ class ShortenedLinkViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class LangingPageView(View):
-    def get(self, request):
-        return render(
-            request, "landing_page.html", context={"form": LinkToShortenForm()}
-        )
+class ShortenedLinkByCode(APIView):
+    """API endpoint that handles ShortenedLinks model,
+    return ShortenedLinks instance by shortened url code"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
 
-    def post(self, request):
-        form = LinkToShortenForm(request.POST)
-
-        if form.is_valid():
-            user = (
-                request.user
-                if request.user.is_authenticated
-                else User.objects.get(username="guest")
-            )
-            full_url = form.cleaned_data["full_url"]
-
-            code = generate_code(MAX_CODE_LENGTH)
-            while ShortenedLink.objects.filter(identifier=code).first() is not None:
-                code = generate_code(MAX_CODE_LENGTH)
-
-            response_form = LinkToShortenForm(
-                initial={
-                    "full_url": full_url,
-                    "shortened_url": request.META["HTTP_HOST"] + "/" + code,
-                }
-            )
-
-            ShortenedLink.objects.create(full_url=full_url, identifier=code, user=user)
-
-            return render(request, "landing_page.html", context={"form": response_form})
-
-        return render(
-            request, "landing_page.html", context={"form": LinkToShortenForm()}
-        )
-
-
-class UserCabinetView(View):
-    def get(self, request):
-        if not request.user.is_authenticated:
-            redirect("landing_page", context={"form": LinkToShortenForm()})
-        user_urls = ShortenedLink.objects.filter(user=request.user)
-        items = []
-
-        for item in user_urls:
-            items.append(
-                (item.full_url, request.META["HTTP_HOST"] + "/" + item.identifier)
-            )
-            item.update_last_use()
-
-        token = Token.objects.get(user=request.user)
-        return render(
-            request,
-            "cabinet.html",
-            context={"shortened_urls": items, "token": "Token " + str(token)},
-        )
-
-    def post(self, request):
-        json_ = json.loads(request.body.decode("utf-8"))
-        identifier = json_["shortened_url"].split("/")[1]
-        get_object_or_404(ShortenedLink, identifier=identifier).delete()
-        return redirect("user_cabinet")
-
-
-def redirect_full_url(request, shortened_url):
-    shortened_url = shortened_url.lower()
-    shortend_url = get_object_or_404(ShortenedLink, identifier=shortened_url)
-    shortend_url.update_last_use()
-    print(format_url(shortend_url.full_url))
-    return redirect(format_url(shortend_url.full_url))
-
-
-def landing_page(request):
-    return render(request, "landing_page.html")
-
-
-def signup(request):
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("home")
-    else:
-        form = UserCreationForm()
-    return render(request, "signup.html", {"form": form})
-
-
-def log_in(request):
-    if request.method == "POST":
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect("user_cabinet")
-    else:
-        form = AuthenticationForm()
-    return render(request, "login.html", {"form": form})
-
-
-def log_out(request):
-    logout(request)
-    return redirect("landing_page")
+    @extend_schema(summary="Get shortened link by code for authentificated user",
+                   responses={status.HTTP_200_OK: ResponseShortenedLinkSerializer})
+    def get(self, request, shortened_url_code):
+        shortened_url_code = shortened_url_code.lower()
+        instance = get_object_or_404(ShortenedLink, user=request.user, identifier=shortened_url_code)
+        instance.update_last_use()
+        serializer = ShortenedLinkSerializer(instance)
+        return Response(serializer.data)
