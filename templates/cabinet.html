@@ -1,0 +1,91 @@
+django
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5" style="background-color: #BCD4E6;">
+  <section class="d-flex align-items-center">
+    <div class="mb-5 container">
+      <div class="row">
+        <div class="" style="height: 120px;"></div>
+        <div class="mt-5 col-lg-6 d-flex flex-column justify-content-center">
+          <h1><b>Your cabinet</b></h1>
+          <h4 class="mt-5"></h4>
+          <div>
+            <div class="mt-5 text-center text-lg-start">
+              <a href="#" class="btn-get-started scrollto d-inline-flex align-items-center justify-content-center align-self-center">
+                <a class="btn btn-primary btn-lg px-4 me-sm-3" href="{% url 'landing_page' %}">Home</a>
+                <a class="btn btn-secondary btn-lg" href="{% url 'login' %}">Log in</a>
+              </a>
+            </div>
+          </div>
+          <div class="mt-5">
+            <p><b>Token:</b> {{ token }}</p> <!-- Add the token field here -->
+          </div>
+        </div>
+        <div class="mt-5 col-lg-6 d-flex flex-column justify-content-center">
+          <div class="links-container" style="background-color: #007BFF; border-radius: 10px; padding: 10px;">
+            <h3 style="color: white;">Your links</h3>
+            <div class="list-container" style="height: 320px; overflow-y: scroll;">
+              <ul class="list-group">
+                {% for item in shortened_urls %}
+                <li class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <p class="mb-0">Full URL: <a href="" class="url-link">{{ item.0 }}</a></p>
+                      <p class="mb-0">Shortened URL: <a href="" class="url-link">{{ item.1 }}</a></p>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteItem('{{ item.1 }}')">Delete</button>
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Footer-->
+  <footer class="container py-2 mt-5 bg-dark">
+    <div class="container px-5">
+      <p class="m-0 text-center text-white">&copy; Belyaev Oleg 2023</p>
+    </div>
+  </footer>
+</div>
+<script>
+    function deleteItem(shortenedUrl) {
+        if (confirm("Are you sure you want to delete this item?")) {
+          // Send AJAX request to delete the item
+          fetch('{% url 'user_cabinet' %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}' // Add the CSRF token here
+            },
+            body: JSON.stringify({ shortened_url: shortenedUrl })
+          })
+            .then(response => {
+              if (response.ok) {
+                // Handle success response
+                console.log("Item deleted successfully");
+                // Send a GET request to refresh the whole document after successful deletion
+                fetch('{% url 'user_cabinet' %}')
+                  .then(response => response.text())
+                  .then(data => {
+                    // Update the whole document with the refreshed data
+                    document.documentElement.innerHTML = data;
+                  })
+                  .catch(error => {
+                    console.log("Error refreshing document:", error);
+                  });
+              } else {
+                throw new Error('Error deleting item');
+              }
+            })
+            .catch(error => {
+              // Handle error response
+              console.log("Error deleting item:", error);
+            });
+        }
+      }
+</script>
+{% endblock %}
