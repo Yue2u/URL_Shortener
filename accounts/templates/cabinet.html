@@ -59,7 +59,7 @@ django
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'X-CSRFToken': '{{ csrf_token }}' // Add the CSRF token here
+              'X-CSRFToken': '{% csrf_token %}' // Add the CSRF token here
             },
             body: JSON.stringify({ shortened_url: shortenedUrl })
           })

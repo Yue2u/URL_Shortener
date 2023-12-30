@@ -29,7 +29,14 @@ SECRET_KEY = "django-insecure-k+^f(83l7os3(3*#ewe^hcyvlbe5)0okkhw6%kfe^xb=jc*7!9
 DEBUG = os.getenv("DEBUG", False)
 MAX_CODE_LENGTH = os.getenv("MAX_CODE_LENGTH", 8)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", default=["*"])
+
+
+ADMINS = [
+    user.split(":")  # [name, email]
+    for user in os.getenv("ADMIN_USERS", "").split(",")
+    if ":" in user  # : is required in pair
+]
 
 
 # Application definition

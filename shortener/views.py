@@ -1,11 +1,10 @@
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework.views import APIView
 
 from .models import ShortenedLink
 from .serializers import (ResponseShortenedLinkSerializer,
@@ -65,15 +64,20 @@ class ShortenedLinkViewSet(viewsets.ModelViewSet):
 class ShortenedLinkByCode(APIView):
     """API endpoint that handles ShortenedLinks model,
     return ShortenedLinks instance by shortened url code"""
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     http_method_names = ["get"]
 
-    @extend_schema(summary="Get shortened link by code for authentificated user",
-                   responses={status.HTTP_200_OK: ResponseShortenedLinkSerializer})
+    @extend_schema(
+        summary="Get shortened link by code for authentificated user",
+        responses={status.HTTP_200_OK: ResponseShortenedLinkSerializer},
+    )
     def get(self, request, shortened_url_code):
         shortened_url_code = shortened_url_code.lower()
-        instance = get_object_or_404(ShortenedLink, user=request.user, identifier=shortened_url_code)
+        instance = get_object_or_404(
+            ShortenedLink, user=request.user, identifier=shortened_url_code
+        )
         instance.update_last_use()
         serializer = ShortenedLinkSerializer(instance)
         return Response(serializer.data)

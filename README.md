@@ -8,7 +8,7 @@ Docs for api can be found on /api/docs
 site supports token authorization, you need to signup and visit your cabinet
 
 Installation: \
-python >=3.10.12
+python >=3.10
 
 Copy repo: \
 git clone git@github.com:Yue2u/URL_Shortener.git

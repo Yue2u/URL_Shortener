@@ -12,6 +12,7 @@ from shortener.models import ShortenedLink
 from shortener.utils import format_url, generate_code
 
 from .forms import LinkToShortenForm
+from .utils import get_or_create_guest
 
 
 class LandingPageView(View):
@@ -25,9 +26,7 @@ class LandingPageView(View):
 
         if form.is_valid():
             user = (
-                request.user
-                if request.user.is_authenticated
-                else User.objects.get(username="guest")
+                request.user if request.user.is_authenticated else get_or_create_guest()
             )
             full_url = form.cleaned_data["full_url"]
 
@@ -82,7 +81,6 @@ def redirect_full_url(request, shortened_url):
     shortened_url = shortened_url.lower()
     shortend_url = get_object_or_404(ShortenedLink, identifier=shortened_url)
     shortend_url.update_last_use()
-    print(format_url(shortend_url.full_url))
     return redirect(format_url(shortend_url.full_url))
 
 

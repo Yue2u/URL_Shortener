@@ -3,6 +3,6 @@ isort==5.13.2
 black==23.12.1
 flake8==6.1.0
 psycopg2==2.9.9 # install postgresql postgresql-contrib libpq-dev python3-dev
-dj-database-url==2.1.0v
+dj-database-url==2.1.0
 djangorestframework==3.14.0
 drf-spectacular==0.27.0
