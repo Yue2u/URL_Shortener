@@ -28,3 +28,9 @@ export DATABASE_URL="postgres://user:password@127.0.0.1:5432/db_name" - databse 
 export DEBUG="True" \
 export MAX_CODE_LENGTH="8" - length of shortened code
 
+OR
+
+Use docker: \
+docker-compose build \
+docker-compose up
+
