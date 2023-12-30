@@ -1,5 +1,4 @@
 version: '3'
-
 services:
   db:
     image: postgres
@@ -12,7 +11,6 @@ services:
       - PGDATA=/tmp/pgdata
     volumes:
       - postgres_data:/tmp/pgdata
-
   web:
     build:
       context: .
@@ -23,9 +21,7 @@ services:
       - db
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/shortener_db
-    command: sh -c "python manage.py migrate && echo \"from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@mail.ru', 'admin')\" | python manage.py shell"
-
-
-
+      - DEBUG=True
+    command: sh -c "python manage.py migrate && python manage.py shell -c 'from django.contrib.auth.models import User; User.objects.filter(username=\"admin\").exists() or User.objects.create_superuser(\"admin\", \"admin@mail.ru\", \"admin\")' && python manage.py runserver 0.0.0.0:8000"
 volumes:
-    postgres_data:
+  postgres_data:
